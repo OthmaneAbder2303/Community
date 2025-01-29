@@ -21,6 +21,7 @@ class Employee(Person):
 
         # invoking the __init__ of the parent class
         Person.__init__(self, name, idnumber)
+        #super().__init__(name, idnumber)
         
     def details(self):
         print("My name is {}".format(self.name))
