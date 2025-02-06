@@ -1,4 +1,4 @@
-from flask import Flask      # type: ignore
+from flask import Flask, render_template
 
 app = Flask(__name__)   # Flask constructor 
   
@@ -17,6 +17,10 @@ def hello():
 @app.route('/hello/<name>') 
 def hello_name(name): 
     return 'Hello %s!' % name 
+
+@app.route('/login')
+def login():
+    retunr render_template('/login')
 
 if __name__=='__main__': 
    app.run(debug = True) 

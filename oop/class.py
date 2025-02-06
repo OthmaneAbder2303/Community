@@ -6,7 +6,7 @@ txt="Halima"  #String
 #.....
 
 # want to create :
-# - specific types adapted to our project or algorithms
+# - specific types adapted to our project // algorithms
 
 #define a class
 class Vehicule:
