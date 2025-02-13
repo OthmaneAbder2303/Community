@@ -1,41 +1,104 @@
 body {
-    background: url('/images/backg.jpg') no-repeat center center fixed;
+    background: url('/static/images/wp.webp') no-repeat center center fixed;
     background-size: cover;
     font-family: Arial, sans-serif;
+    animation: fadeIn 1.5s ease-in-out;
+    color: #102f31;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 .card {
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(16, 47, 49, 0.9);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-20px);
+    animation: slideDown 0.8s ease-in-out forwards;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    padding: 20px;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 h2 {
-    color: #333;
+    color: #ffffff;
     font-weight: bold;
+    animation: fadeIn 1.2s ease-in-out;
 }
 
 .form-label {
     font-weight: bold;
-    color: #555;
+    color: #ffffff;
+    transition: color 0.3s ease;
+}
+
+.form-label:hover {
+    color: #d1e7e8;
+}
+
+.input-field {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: 1px solid #d1e7e8;
+    background: rgba(255, 255, 255, 0.9);
+    transition: border-color 0.3s ease;
+}
+
+.input-field:focus {
+    border-color: #d1e7e8;
+    outline: none;
 }
 
 .btn-primary {
-    background-color: #28a745;
-    border-color: #28a745;
-    transition: background-color 0.3s ease;
+    background-color: #102f31;
+    border-color: #102f31;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    padding: 10px;
+    width: 100%;
+    border-radius: 5px;
 }
 
 .btn-primary:hover {
-    background-color: #218838;
-    border-color: #1e7e34;
+    background-color: #0d2628;
+    border-color: #0a1d1e;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 p a {
-    color: #28a745;
+    color: #ffffff;
     text-decoration: none;
+    transition: color 0.3s ease;
 }
 
 p a:hover {
     text-decoration: underline;
+    color: #d1e7e8;
+}
+
+p span {
+    color: #d1e7e8;
 }
