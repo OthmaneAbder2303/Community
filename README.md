@@ -22,8 +22,8 @@ Make sure you have **Python 3.x** installed on your machine.
 ### Steps
 1. Clone the repository:
    ```sh
-   git clone https://github.com/your-repo/chat-app.git
-   cd chat-app
+   git clone https://github.com/OthmaneAbder2303/Community.git
+   cd community
    ```
 2. Create and activate a virtual environment:
    ```sh
@@ -45,16 +45,21 @@ Make sure you have **Python 3.x** installed on your machine.
 
 ## Project Structure
 ```
-chat-app/
+COMMUNITY/
 │-- static/
 │   ├── css/
 │   │   ├── register.css
+│   │   ├── login.css
 │   │   ├── chat.css
 │   ├── js/
 │   │   ├── script.js
 │-- templates/
+│   ├── login.html
 │   ├── register.html
 │   ├── chat.html
+│-- app.py
+│-- db_conn.py
+│-- models.py
 │-- server.py
 │-- requirements.txt
 │-- README.md
@@ -64,7 +69,4 @@ chat-app/
 - Open the **register page** (`/register`) to create an account.
 - Log in to access the **chat room**.
 - Start chatting in real time with other users.
-
-## License
-This project is licensed under the MIT License.
 
