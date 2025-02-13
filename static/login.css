@@ -1,18 +1,14 @@
 body {
     background: url('/static/images/wp.webp') no-repeat center center fixed;
     background-size: cover;
-    font-family: Arial, sans-serif;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
     animation: fadeIn 1.5s ease-in-out;
-    color: #102f31;
+    color: #ffffff; /* Set default text color to white */
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .card {
@@ -31,20 +27,15 @@ body {
 }
 
 @keyframes slideDown {
-    from {
-        transform: translateY(-20px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 h2 {
     color: #ffffff;
     font-weight: bold;
     animation: fadeIn 1.2s ease-in-out;
+    text-align: center;
 }
 
 .form-label {
@@ -73,32 +64,38 @@ h2 {
 }
 
 .btn-primary {
-    background-color: #102f31;
-    border-color: #102f31;
+    background-color: #25D366; /* WhatsApp green */
+    border: none;
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
     padding: 10px;
     width: 100%;
     border-radius: 5px;
+    font-weight: bold;
+    color: white;
 }
 
 .btn-primary:hover {
-    background-color: #0d2628;
-    border-color: #0a1d1e;
+    background-color: #1EBE57;
     transform: scale(1.05);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* Fix visibility of "Already have an account?" */
+p {
+    text-align: center;
+    font-size: 14px;
+    color: white; /* Ensures visibility */
+    margin-top: 15px; /* Adds space above */
+}
+
 p a {
-    color: #ffffff;
+    color: #25D366; /* WhatsApp green */
     text-decoration: none;
+    font-weight: bold;
     transition: color 0.3s ease;
 }
 
 p a:hover {
     text-decoration: underline;
-    color: #d1e7e8;
-}
-
-p span {
-    color: #d1e7e8;
+    color: #1EBE57;
 }
