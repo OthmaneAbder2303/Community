@@ -3,7 +3,7 @@ from models import db,user
 
 app = Flask(__name__)   # Flask constructor 
   
-@app.route("/",methods=['GET','POST'])
+'''@app.route("/",methods=['GET','POST'])
 def home():
     if request.method == 'POST':
         action = request.form.get('action')
@@ -12,7 +12,7 @@ def home():
         else:
             return redirect(url_for('register'))
         
-    return render_template('home.html')
+    return render_template('home.html')'''
 
 @app.route('/login', methods=['GET','POST'])
 def login():
@@ -29,6 +29,20 @@ def login():
     
     return render_template('login.html')
 
+
+@app.route('/register', methods=['GET','POST'])
+def register():
+    if request.method == 'POST':
+        log = request.form.get('login')
+        email = request.form.get('email')
+        name = request.form.get('name')
+        password = request.form.get('password')
+        usr = user(name, log, email, password)
+        db.session.add(usr)
+        db.session.commit()
+        return redirect(url_for('login'))
+    
+    return render_template('register.html')
 
 
 if __name__=='__main__': 
