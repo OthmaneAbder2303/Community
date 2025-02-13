@@ -1,6 +1,0 @@
-from models import db
-from db_conn import connect
-
-engine = connect()
-db.metadata.create_all(engine)
-print("DataBase Created Successfully")
