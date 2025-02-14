@@ -53,6 +53,7 @@ def chat():
 # Create the tables in the database (run once)
 with app.app_context():
     db.create_all()
+    
 print("Database Created Successfully")
 
 app.run(debug = True) 
