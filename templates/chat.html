@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
+</head>
+<body>
+    <h2>Welcome, {{ username }}!</h2>
+    <h3>Chat Room</h3>
+    <div id="messages" style="border: 1px solid black; height: 300px; overflow-y: auto;"></div>
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <button id="sendBtn">Send</button>
+
+    <script src="{{ url_for('static', filename='chat.js') }}"></script>
+</body>
+</html>

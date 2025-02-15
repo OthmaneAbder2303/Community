@@ -1,6 +1,7 @@
 from flask import Flask, request, redirect, url_for, render_template, session
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db,User 
+from models import db,User
+from flask_socketio import SocketIO, join_room, leave_room, send
 
 app = Flask(__name__)
 
@@ -9,6 +10,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'othmaneskey'
 
 db.init_app(app)
+
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.route('/login', methods=['GET','POST'])
 def login():
@@ -50,10 +53,40 @@ def chat():
         return redirect(url_for('login'))
     return "Welcome to the chat!"
 
+# SocketIO Event Handlers
+
+@socketio.on('connect')
+def handle_connect():
+    print(f"User {session.get('username')} connected.")
+
+@socketio.on('message')
+def handle_message(data):
+    """Broadcast messages to all clients"""
+    print(f"Received message: {data['msg']} from {session.get('username')}")
+    send({'msg': data['msg'], 'username': session.get('username')}, broadcast=True)
+
+@socketio.on('join')
+def handle_join(data):
+    """Handles users joining a chat room"""
+    room = data['room']
+    join_room(room)
+    send({'msg': f"{session.get('username')} has joined the room {room}."}, to=room)
+
+@socketio.on('leave')
+def handle_leave(data):
+    """Handles users leaving a chat room"""
+    room = data['room']
+    leave_room(room)
+    send({'msg': f"{session.get('username')} has left the room {room}."}, to=room)
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print(f"User {session.get('username')} disconnected.")
+
+
 # Create the tables in the database (run once)
 with app.app_context():
-    db.create_all()
-    
+    db.create_all() 
 print("Database Created Successfully")
 
 app.run(debug = True) 
