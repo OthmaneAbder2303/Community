@@ -2,12 +2,13 @@ from flask import Flask, request, redirect, url_for, render_template, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db,User
 from flask_socketio import SocketIO, join_room, leave_room, send
+import os
 
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres:Iyas.2020@localhost:5432/community'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.secret_key = 'othmaneskey'
+app.secret_key = os.getenv('othmaneskey', 'fallback_secret_key')
 
 db.init_app(app)
 
@@ -22,6 +23,7 @@ def login():
 
         if usr and check_password_hash(usr.password, password):
             session['user_id'] = usr.id
+            session['username'] = usr.name
             return redirect(url_for('chat'))
         else:
             print('Not Authorized')
@@ -51,13 +53,16 @@ def register():
 def chat():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    return "Welcome to the chat!"
+    return render_template('chat.html')
 
 # SocketIO Event Handlers
 
 @socketio.on('connect')
 def handle_connect():
+    if 'user_id' not in session:
+        return False  # Refuse la connexion
     print(f"User {session.get('username')} connected.")
+
 
 @socketio.on('message')
 def handle_message(data):
