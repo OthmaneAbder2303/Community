@@ -3,49 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat</title>
-    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
-    <script>
-        const socket = io.connect("http://localhost:5000");
-    
-        // Update users list
-        socket.on('update_users', function(users) {
-            document.getElementById('users').innerHTML = users.join('<br>');
-        });
-    
-        // Listen for new messages
-        socket.on('message', function(data) {
-            const message = document.createElement("p");
-            message.textContent = `${data.username}: ${data.msg}`;
-            document.getElementById('messages').appendChild(message);
-        });
-    
-        // Send message to another user (private chat)
-        function sendMessage(toUser) {
-            const message = document.getElementById('message').value;
-            socket.send({ msg: message, username: toUser });
-        }
-    
-        // Join a room for private chat with another user
-        function joinRoom(toUser) {
-            socket.emit('join', { username: toUser });
-        }
-    </script>
-    
-    <!-- HTML for the private chat functionality -->
-    <div>
-        <h3>Users</h3>
-        <div id="users">
-            <!-- List of connected users will be displayed here -->
+    <title>Chat App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Online Users</h2>
+            <ul id="user-list"></ul>
+            <button id="logout">Logout</button>
         </div>
         
-        <h3>Messages</h3>
-        <div id="messages">
-            <!-- Private messages will appear here -->
+        <div class="chat-window">
+            <h2>Chat Room</h2>
+            <ul id="messages"></ul>
+            <input type="text" id="message-input" placeholder="Type a message...">
+            <button id="send-message">Send</button>
         </div>
-    
-        <input type="text" id="message" placeholder="Type a message">
-        <button onclick="sendMessage('otherUser')">Send to user</button>
-        <button onclick="joinRoom('otherUser')">Join chat with user</button>
     </div>
-    
+
+    <script>
+        const socket = io.connect("http://localhost:5000");
+        const username = "{{ session['username'] }}";
+
+        socket.emit("join", { username });
+
+        // Update user list
+        socket.on("update_users", function(users) {
+            $("#user-list").empty();
+            users.forEach(user => {
+                $("#user-list").append(`<li>${user}</li>`);
+            });
+        });
+
+        // Send message
+        $("#send-message").click(function() {
+            const message = $("#message-input").val();
+            if (message) {
+                socket.emit("message", { username, msg: message });
+                $("#message-input").val("");
+            }
+        });
+
+        // Receive message
+        socket.on("message", function(data) {
+            $("#messages").append(`<li><b>${data.username}:</b> ${data.msg}</li>`);
+        });
+
+        // Logout button
+        $("#logout").click(function() {
+            window.location.href = "/logout";
+        });
+    </script>
+</body>
+</html>
