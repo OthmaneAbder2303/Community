@@ -3,64 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp-like Chat</title>
-    <link href="/static/css/chat.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container">
-        <!-- Left Sidebar -->
-        <div class="sidebar">
-            <!-- Header with Settings & Account -->
-            <div class="sidebar-header">
-                <div class="sidebar-title">Settings</div>
-                <button class="sidebar-btn"><i class="fas fa-cog"></i></button>
-            </div>
-            <div class="sidebar-header">
-                <div class="sidebar-title">Account</div>
-                <button class="sidebar-btn"><i class="fas fa-user"></i></button>
-            </div>
-
-            <!-- Profile List -->
-            <div class="profiles">
-                <div class="profile" onclick="changeProfile('John')">
-                    <img src="https://bootdey.com/img/Content/avatar/avatar1.png" class="profile-avatar" alt="User">
-                    <div class="profile-info">
-                        <div class="profile-name">John</div>
-                        <div class="last-message">Hey, how are you?</div>
-                    </div>
-                    <div class="last-message-time">10:30 AM</div>
-                </div>
-                <div class="profile" onclick="changeProfile('Anna')">
-                    <img src="https://bootdey.com/img/Content/avatar/avatar3.png" class="profile-avatar" alt="User">
-                    <div class="profile-info">
-                        <div class="profile-name">Anna</div>
-                        <div class="last-message">See you tomorrow!</div>
-                    </div>
-                    <div class="last-message-time">9:00 AM</div>
-                </div>
-            </div>
+    <title>Chat</title>
+    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+    <script>
+        const socket = io.connect("http://localhost:5000");
+    
+        // Update users list
+        socket.on('update_users', function(users) {
+            document.getElementById('users').innerHTML = users.join('<br>');
+        });
+    
+        // Listen for new messages
+        socket.on('message', function(data) {
+            const message = document.createElement("p");
+            message.textContent = `${data.username}: ${data.msg}`;
+            document.getElementById('messages').appendChild(message);
+        });
+    
+        // Send message to another user (private chat)
+        function sendMessage(toUser) {
+            const message = document.getElementById('message').value;
+            socket.send({ msg: message, username: toUser });
+        }
+    
+        // Join a room for private chat with another user
+        function joinRoom(toUser) {
+            socket.emit('join', { username: toUser });
+        }
+    </script>
+    
+    <!-- HTML for the private chat functionality -->
+    <div>
+        <h3>Users</h3>
+        <div id="users">
+            <!-- List of connected users will be displayed here -->
         </div>
-
-        <!-- Right Chat Area -->
-        <div class="chat-area">
-            <!-- Chat Header -->
-            <div class="chat-header">
-                <div class="chat-header-title">Select a Profile</div>
-            </div>
-
-            <!-- Chat Messages -->
-            <div class="chat-messages" id="chatMessages"></div>
-
-            <!-- Message Input -->
-            <div class="chat-input">
-                <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off">
-                <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
-            </div>
+        
+        <h3>Messages</h3>
+        <div id="messages">
+            <!-- Private messages will appear here -->
         </div>
+    
+        <input type="text" id="message" placeholder="Type a message">
+        <button onclick="sendMessage('otherUser')">Send to user</button>
+        <button onclick="joinRoom('otherUser')">Join chat with user</button>
     </div>
-
-    <script src="/static/js/chat.js"></script>
-</body>
-</html>
-
+    

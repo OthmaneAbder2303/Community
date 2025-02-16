@@ -1,55 +1,75 @@
-// Simulating a simple chat environment with dynamic users and messages
-document.addEventListener('DOMContentLoaded', function() {
-    // Let the user input their name at the start
-    let userName = prompt("Enter your name:");
-    if (!userName) {
-        userName = "Guest";
+const socket = io.connect('http://localhost:5000/login'); // Adjust based on your app URL
+const username = "{{ session['username'] }}"; // User's name from the session
+
+let currentRoom = "general"; // Default chat room
+const connectedUsers = {};
+
+// Emit when a message is sent
+$('#send-message').click(function() {
+    const message = $('#message-input').val();
+    if (message) {
+        socket.emit('message', { msg: message });
+        $('#message-input').val('');
     }
+});
 
-    // Update the username in the chat header
-    document.getElementById("userDisplay").innerText = `Welcome, ${userName}`;
+// Handle incoming messages
+socket.on('message', function(data) {
+    const messageClass = data.username === username ? 'sent' : 'received';
+    $('#messages').append(
+        `<li class="message ${messageClass}">${data.username}: ${data.msg}</li>`
+    );
+});
 
-    // Select the elements
-    const messageInput = document.getElementById('messageInput');
-    const sendMessageBtn = document.getElementById('sendMessageBtn');
-    const chatBody = document.getElementById('chatBody');
+// Handle the list of connected users
+socket.on('update_users', function(users) {
+    $('#user-list').empty();
+    users.forEach(user => {
+        const onlineClass = connectedUsers[user] ? 'online' : 'offline';
+        $('#user-list').append(
+            `<li class="list-group-item"><span class="status-dot ${onlineClass}"></span>${user}</li>`
+        );
+    });
+});
 
-    // Function to display the message
-    function displayMessage(message, sender) {
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('chat-message');
-        
-        const avatar = document.createElement('img');
-        avatar.src = sender === userName ? "https://bootdey.com/img/Content/avatar/avatar1.png" : "https://bootdey.com/img/Content/avatar/avatar3.png";
-        avatar.alt = sender;
+// Join the room on page load
+socket.emit('join', { room: currentRoom });
 
-        const messageContent = document.createElement('div');
-        messageContent.classList.add('message-content');
-        messageContent.classList.add(sender === userName ? 'sent' : 'received');
-        messageContent.innerHTML = `<p>${message}</p>`;
-        
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(messageContent);
-        
-        chatBody.appendChild(messageDiv);
-
-        // Auto-scroll to the bottom of the chat window
-        chatBody.scrollTop = chatBody.scrollHeight;
+// Handle adding/removing friends
+$('#add-friend').click(function() {
+    const friendName = prompt('Enter the friend\'s username:');
+    if (friendName) {
+        $('#friends-list').append(
+            `<li class="list-group-item">${friendName} <button class="btn btn-danger btn-sm float-end remove-btn">Remove</button></li>`
+        );
     }
+});
 
-    // Event listener for the send button
-    sendMessageBtn.addEventListener('click', function() {
-        const message = messageInput.value.trim();
-        if (message) {
-            displayMessage(message, userName); // Display the sent message
-            messageInput.value = ''; // Clear the input field
-        }
-    });
+$('#remove-friend').click(function() {
+    const friendName = prompt('Enter the friend\'s username to remove:');
+    if (friendName) {
+        $('#friends-list li').each(function() {
+            if ($(this).text().includes(friendName)) {
+                $(this).remove();
+            }
+        });
+    }
+});
 
-    // Allow pressing Enter to send a message
-    messageInput.addEventListener('keydown', function(event) {
-        if (event.key === "Enter") {
-            sendMessageBtn.click();
-        }
-    });
+// Update the list of users in the sidebar when they connect/disconnect
+socket.on('connect', function() {
+    console.log('Socket connected');
+});
+
+socket.on('message', function(data) {
+    console.log('Received message:', data);
+    const messageClass = data.username === username ? 'sent' : 'received';
+    $('#messages').append(
+        `<li class="message ${messageClass}">${data.username}: ${data.msg}</li>`
+    );
+});
+
+
+socket.on('disconnect', function() {
+    delete connectedUsers[username];
 });

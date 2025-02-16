@@ -79,49 +79,26 @@ def handle_disconnect():
         emit("update_users", list(connected_users.keys()), broadcast=True)
         print(f"❌ {username} is now offline.")
 
-@socketio.on('join')
-def handle_join(data):
-    """Handles users joining a private chat room"""
-    user1 = session.get('username')  # The current logged-in user
-    user2 = data['username']  # The other user (recipient of the message)
-
-    # Create a unique room based on both users
-    room = f"{user1}_{user2}" if user1 < user2 else f"{user2}_{user1}"
-    
-    join_room(room)
-    print(f"{user1} joined the room {room}")
-    
-    # Notify the users that someone has joined
-    send({'msg': f"{user1} has joined the room."}, to=room)
-
 @socketio.on('message')
 def handle_message(data):
-    """Handles sending messages to a specific room (private chat)"""
-    user1 = session.get('username')  # The current logged-in user
-    user2 = data['username']  # The recipient user
+    """Broadcast messages to all clients"""
+    username = session.get('username')
+    print(f"📩 {username}: {data['msg']}")
+    send({'msg': data['msg'], 'username': username}, broadcast=True)
 
-    # Create a unique room name based on both users
-    room = f"{user1}_{user2}" if user1 < user2 else f"{user2}_{user1}"
-    
-    print(f"📩 {user1} to {user2}: {data['msg']}")
-    send({'msg': data['msg'], 'username': user1}, to=room)
-
+@socketio.on('join')
+def handle_join(data):
+    """Handles users joining a chat room"""
+    room = data['room']
+    join_room(room)
+    send({'msg': f"{session.get('username')} has joined the room {room}."}, to=room)
 
 @socketio.on('leave')
 def handle_leave(data):
     """Handles users leaving a chat room"""
-    room = data.get('room')  # Ensure we safely get the room
-
-    # Check if the room exists and if the user is in the room
-    if room and session.get('username'):
-        leave_room(room)  # Let the user leave the room
-
-        # Broadcast a message to the room that the user left
-        send({'msg': f"{session.get('username')} has left the room {room}."}, to=room)
-        print(f"❌ {session.get('username')} has left the room {room}.")
-    else:
-        print("Error: Room or username not found.")
-
+    room = data['room']
+    leave_room(room)
+    send({'msg': f"{session.get('username')} has left the room {room}."}, to=room)
 
 
 # Create the tables in the database (run once)
