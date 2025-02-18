@@ -14,8 +14,11 @@ db.init_app(app)
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Stocker les utilisateurs connectés
 connected_users = {}
+
+@app.route('/')
+def home():
+    return render_template('home.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -42,7 +45,6 @@ def login():
 @app.route("/logout")
 def logout():
     user_id = session.get("user_id")
-    
     if user_id:
         usr = User.query.get(user_id)
         if usr:
@@ -53,8 +55,6 @@ def logout():
     session.pop("username", None)
 
     return redirect(url_for("login"))
-
-
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -84,12 +84,11 @@ def chat():
 @socketio.on('connect')
 def handle_connect():
     if 'user_id' not in session:
-        return False  # Refuse the connection
+        return False
 
     username = session.get('username')
     connected_users[username] = request.sid
-
-    # Update user status in DB
+    
     user = User.query.filter_by(name=username).first()
     if user:
         user.is_online = True
@@ -104,7 +103,6 @@ def handle_disconnect():
     if username in connected_users:
         del connected_users[username]
 
-        # Update user status in DB
         user = User.query.filter_by(name=username).first()
         if user:
             user.is_online = False
@@ -117,16 +115,16 @@ def handle_disconnect():
 @socketio.on('join')
 def handle_join(data):
     """Handles users joining a private chat room"""
-    user1 = session.get('username')  # The current logged-in user
-    user2 = data.get('username')  # The recipient
+    user1 = session.get('username')
+    user2 = data.get('username')
 
     if not user1:
-        return  # Prevent unauthorized users from joining
+        return
 
     if not user2 or user1 == user2:
-        return  # Prevent joining an invalid room (self-chat not needed)
+        return
 
-    # Create a unique room ID
+    # create a room id
     room = f"{user1}_{user2}" if user1 < user2 else f"{user2}_{user1}"
     
     join_room(room)
