@@ -25,7 +25,7 @@ class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sender = db.Column(db.String(50), nullable=False)
     recipient = db.Column(db.String(50), nullable=False)
-    room = db.Column(db.String(100), nullable=False)
+    room = db.Column(db.String(100))
     message = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=db.func.now())
 

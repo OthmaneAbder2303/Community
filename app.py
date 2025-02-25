@@ -1,7 +1,8 @@
-from flask import Flask, request, redirect, url_for, render_template, session
+from flask import Flask, request, redirect, url_for, render_template, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Message
-from flask_socketio import SocketIO, join_room, leave_room, send, emit
+from flask_socketio import SocketIO, send, emit
+from datetime import datetime
 import os
 
 app = Flask(__name__)
@@ -30,7 +31,7 @@ def login():
         if usr and check_password_hash(usr.password, password):
             session['user_id'] = usr.id
             session['username'] = usr.name
-            
+
             usr.is_online = True
             db.session.commit()
 
@@ -38,9 +39,8 @@ def login():
         else:
             print('Not Authorized')
             return redirect(url_for('login'))
-    
-    return render_template('login.html')
 
+    return render_template('login.html')
 
 @app.route("/logout")
 def logout():
@@ -56,7 +56,6 @@ def logout():
 
     return redirect(url_for("login"))
 
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -65,21 +64,19 @@ def register():
         name = request.form.get('name')
         password = request.form.get('password')
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-        
+
         usr = User(name, log, email, hashed_password)
         db.session.add(usr)
         db.session.commit()
         return redirect(url_for('login'))
-    
-    return render_template('register.html')
 
+    return render_template('register.html')
 
 @app.route('/chat')
 def chat():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('chat.html')
-
 
 @socketio.on('connect')
 def handle_connect():
@@ -88,11 +85,6 @@ def handle_connect():
 
     username = session.get('username')
     connected_users[username] = request.sid
-    
-    user = User.query.filter_by(name=username).first()
-    if user:
-        user.is_online = True
-        db.session.commit()
 
     emit("update_users", list(connected_users.keys()), broadcast=True)
     print(f"✅ {username} is now online.")
@@ -103,99 +95,43 @@ def handle_disconnect():
     if username in connected_users:
         del connected_users[username]
 
-        user = User.query.filter_by(name=username).first()
-        if user:
-            user.is_online = False
-            db.session.commit()
-
-        emit("update_users", list(connected_users.keys()), broadcast=True)
-        print(f"❌ {username} is now offline.")
-
-
-@socketio.on('join')
-def handle_join(data):
-    """Handles users joining a private chat room"""
-    user1 = session.get('username')
-    user2 = data.get('username')
-
-    if not user1:
-        return
-
-    if not user2 or user1 == user2:
-        return
-
-    # create a room id
-    room = f"{user1}_{user2}" if user1 < user2 else f"{user2}_{user1}"
-    
-    join_room(room)
-    print(f"{user1} joined the room {room}")
-
-    # Notify both users
-    send({'msg': f"{user1} has joined the room."}, to=room)
-
-
-from models import db, Message  # Import the Message model
+    emit("update_users", list(connected_users.keys()), broadcast=True)
+    print(f"❌ {username} is now offline.")
 
 @socketio.on('message')
 def handle_message(data):
-    """Handles sending messages to a specific room (private chat)"""
-    user1 = session.get('username')  # The current logged-in user
-    user2 = data['username']  # The recipient user
-    message_text = data['msg']  # The actual message
+    sender = session.get('username')
+    message_text = data['msg']
 
-    if not user1 or not user2:
+    if not sender or not message_text:
         return
 
-    # Create a unique room name
-    room = f"{user1}_{user2}" if user1 < user2 else f"{user2}_{user1}"
+    timestamp = datetime.utcnow()
 
     # Save message in database
-    message = Message(sender=user1, recipient=user2, room=room, message=message_text)
+    message = Message(sender=sender, message=message_text, timestamp=timestamp)
     db.session.add(message)
     db.session.commit()
 
-    # Send message to the chat room
-    send({'msg': message_text, 'username': user1}, to=room)
+    # Send message to all users
+    send({'msg': message_text, 'username': sender, 'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S')}, broadcast=True)
 
-@app.route('/get_messages/<username>', methods=['GET'])
-def get_messages(username):
-    """Retrieve past messages between the logged-in user and another user"""
+@app.route('/get_messages', methods=['GET'])
+def get_messages():
+    """Retrieve all past messages."""
     if 'username' not in session:
-        return {"error": "Unauthorized"}, 401
+        return jsonify({"error": "Unauthorized"}), 401
 
-    user1 = session['username']
-    user2 = username  # The other user in the chat
+    messages = Message.query.order_by(Message.timestamp).all()
 
-    # Generate the correct room name
-    room = f"{user1}_{user2}" if user1 < user2 else f"{user2}_{user1}"
+    return jsonify([
+        {'sender': msg.sender, 'message': msg.message, 'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')}
+        for msg in messages
+    ])
 
-    # Fetch messages from the database
-    messages = Message.query.filter_by(room=room).order_by(Message.timestamp).all()
-    
-    return [{'sender': msg.sender, 'message': msg.message, 'timestamp': msg.timestamp} for msg in messages]
-
-
-
-@socketio.on('leave')
-def handle_leave(data):
-    """Handles users leaving a chat room"""
-    room = data.get('room')  # Ensure we safely get the room
-
-    # Check if the room exists and if the user is in the room
-    if room and session.get('username'):
-        leave_room(room)  # Let the user leave the room
-
-        # Broadcast a message to the room that the user left
-        send({'msg': f"{session.get('username')} has left the room {room}."}, to=room)
-        print(f"❌ {session.get('username')} has left the room {room}.")
-    else:
-        print("Error: Room or username not found.")
-
-
-
-# Create the tables in the database (run once)
+# Create tables in the database
 with app.app_context():
-    db.create_all() 
+    db.create_all()
 print("Database Created Successfully")
 
 if __name__ == '__main__':

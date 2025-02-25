@@ -4,58 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat App</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script defer src="{{ url_for('static', filename='js/chat.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
 </head>
 <body>
-    <div class="container">
-        <div class="sidebar">
-            <h2>Online Users</h2>
+    <div class="chat-container">
+        <h2>Welcome, {{ session['username'] }}</h2>
+        <div class="user-list">
+            <h3>Online Users</h3>
             <ul id="user-list"></ul>
-            <button id="logout">Logout</button>
         </div>
-        
-        <div class="chat-window">
-            <h2>Chat Room</h2>
-            <ul id="messages"></ul>
+        <ul id="messages"></ul>
+        <div class="message-input">
             <input type="text" id="message-input" placeholder="Type a message...">
             <button id="send-message">Send</button>
         </div>
+        <a href="/logout" class="logout-btn">Logout</a>
     </div>
-
-    <script>
-        const socket = io.connect("http://localhost:5000");
-        const username = "{{ session['username'] }}";
-
-        socket.emit("join", { username });
-
-        // Update user list
-        socket.on("update_users", function(users) {
-            $("#user-list").empty();
-            users.forEach(user => {
-                $("#user-list").append(`<li>${user}</li>`);
-            });
-        });
-
-        // Send message
-        $("#send-message").click(function() {
-            const message = $("#message-input").val();
-            if (message) {
-                socket.emit("message", { username, msg: message });
-                $("#message-input").val("");
-            }
-        });
-
-        // Receive message
-        socket.on("message", function(data) {
-            $("#messages").append(`<li><b>${data.username}:</b> ${data.msg}</li>`);
-        });
-
-        // Logout button
-        $("#logout").click(function() {
-            window.location.href = "/logout";
-        });
-    </script>
 </body>
 </html>

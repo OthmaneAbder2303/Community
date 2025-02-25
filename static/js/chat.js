@@ -1,85 +1,50 @@
-const socket = io.connect('http://localhost:5000'); // Fixed WebSocket connection
-const username = "{{ session['username'] }}"; // Get username from session
-let currentRoom = null; // Track current chat room
+document.addEventListener("DOMContentLoaded", function () {
+    const socket = io.connect("http://localhost:5000");
+    const username = "{{ session['username'] }}";
 
-// Store connected users
-let connectedUsers = {};
+    // Fetch previous messages
+    fetch(`/get_messages`)
+        .then(response => response.json())
+        .then(messages => {
+            const messagesList = document.getElementById("messages");
+            messages.forEach(msg => {
+                const li = document.createElement("li");
+                li.innerHTML = `<b>${msg.sender}:</b> ${msg.message} <span class='timestamp'>(${msg.timestamp})</span>`;
+                messagesList.appendChild(li);
+            });
+        });
 
-// Function to append messages to chat
-function appendMessage(user, message, isSent) {
-    const messageClass = isSent ? 'sent' : 'received';
-    $('#messages').append(
-        `<li class="message ${messageClass}"><strong>${user}:</strong> ${message}</li>`
-    );
-}
-
-// Emit when sending a message
-$('#send-message').click(function() {
-    const message = $('#message-input').val();
-    if (message && currentRoom) {
-        socket.emit('message', { username: currentRoom, msg: message });
-        $('#message-input').val(''); // Clear input
-    }
-});
-
-// Handle incoming messages
-socket.on('message', function(data) {
-    appendMessage(data.username, data.msg, data.username === username);
-});
-
-// Handle user connection updates
-socket.on('update_users', function(users) {
-    $('#user-list').empty();
-    connectedUsers = {}; // Reset user list
-
-    users.forEach(user => {
-        connectedUsers[user] = true;
-        const onlineClass = 'online'; // Highlight as online
-        $('#user-list').append(
-            `<li class="list-group-item user-item" data-user="${user}">
-                <span class="status-dot ${onlineClass}"></span> ${user}
-            </li>`
-        );
+    // Update user list
+    socket.on("update_users", function(users) {
+        const userList = document.getElementById("user-list");
+        userList.innerHTML = "";
+        users.forEach(user => {
+            const li = document.createElement("li");
+            li.textContent = user;
+            userList.appendChild(li);
+        });
     });
 
-    attachUserClickHandlers(); // Attach click events again
-});
-
-// Join a private chat room when clicking on a user
-function attachUserClickHandlers() {
-    $('.user-item').click(function() {
-        const recipient = $(this).data('user');
-        if (recipient !== username) {
-            currentRoom = recipient; // Set current room
-
-            socket.emit('join', { username: recipient });
-            $('#messages').empty(); // Clear messages for new chat
-            $('#chat-header').text(`Chat with ${recipient}`);
+    // Send message
+    document.getElementById("send-message").addEventListener("click", function () {
+        const messageInput = document.getElementById("message-input");
+        const message = messageInput.value;
+        if (message) {
+            socket.emit("message", { msg: message });
+            messageInput.value = "";
         }
     });
-}
 
-// Handle user joining
-socket.emit('join', { username }); // Automatically join upon connecting
+    // Receive message
+    socket.on("message", function(data) {
+        const messagesList = document.getElementById("messages");
+        const li = document.createElement("li");
+        li.innerHTML = `<b>${data.username}:</b> ${data.msg} <span class='timestamp'>(${data.timestamp})</span>`;
+        messagesList.appendChild(li);
+    });
 
-// Handle disconnect event
-socket.on('disconnect', function() {
-    console.log('Disconnected from server');
-});
-
-// Add friend functionality
-$('#add-friend').click(function() {
-    const friendName = prompt("Enter your friend's username:");
-    if (friendName && friendName !== username) {
-        $('#friends-list').append(
-            `<li class="list-group-item">${friendName} 
-                <button class="btn btn-danger btn-sm float-end remove-btn">Remove</button>
-            </li>`
-        );
-    }
-});
-
-// Remove friend functionality
-$(document).on('click', '.remove-btn', function() {
-    $(this).parent().remove();
+    // Logout button
+    document.getElementById("logout").addEventListener("click", function () {
+        window.location.href = "/logout";
+    });
 });
